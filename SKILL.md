@@ -97,11 +97,13 @@ Approximately how many slides? Options: Short 5-10 / Medium 10-20 / Long 20+
 Do you have content ready? Options: All content ready / Rough notes / Topic only
 
 **Question 4 — Inline Editing** (header: "Editing"):
-Do you need to edit text directly in the browser after generation? Options:
-- "Yes (Recommended)" — Can edit text in-browser, auto-save to localStorage, export file
-- "No" — Presentation only, keeps file smaller
+Do you need to edit or review the presentation in-browser?
+- "Edit mode" — Click any text to edit in-browser, Ctrl+S to save
+- "Review mode (Recommended)" — Ctrl+E to enter review overlay: click or drag to annotate elements, export suggestions.md for AI revision
+- "Both" — Includes both edit mode and review mode
+- "Neither" — Clean output, smaller file
 
-**Remember the user's editing choice — it determines whether edit-related code is included in Phase 3.**
+**Remember the user's choice — it gates which code blocks are injected in Phase 3.5.**
 
 If user has content, ask them to share it.
 
@@ -185,6 +187,43 @@ If images were provided, the slide outline already incorporates them from Step 1
 
 ---
 
+## Phase 3.5: Inject Interactive Modes
+
+After generating the presentation HTML, inject the appropriate code blocks
+based on the user's Phase 1 Question 4 answer.
+
+### If "Review mode" or "Both" selected:
+
+Append the full contents of [review-mode.snippet.html](review-mode.snippet.html)
+immediately before the closing `</body>` tag.
+
+The snippet provides:
+- `Ctrl+E` — toggle Review Mode overlay (also shown in bottom status bar)
+- **Click** any element → blue border highlight, CSS selector captured
+- **Drag** to select a region → orange dashed box, pixel coordinates captured
+- Right sidebar → write suggestion text → Save (pins numbered badge on element)
+- **Export .md** → downloads `suggestions.md` with all suggestions formatted for AI revision
+
+The snippet is fully self-contained (no external dependencies).
+All CSS uses `id` and class prefixes starting with `__r` to avoid collisions
+with the presentation's own styles.
+
+### If "Edit mode" or "Both" selected:
+
+Inject the existing edit mode code (hover top-left or press E, contenteditable,
+Ctrl+S saves to localStorage).
+
+### Verification checklist before delivery:
+
+- [ ] `Ctrl+E` toggles the review overlay without breaking slide navigation
+- [ ] Clicking a slide element shows a blue highlight and captures its selector
+- [ ] Dragging shows an orange dashed box and captures coordinates
+- [ ] Save appends a numbered pin on the element and adds to the sidebar list
+- [ ] Export .md downloads a properly formatted markdown file
+- [ ] Review UI does not interfere with existing slide animations or fonts
+
+---
+
 ## Phase 4: PPT Conversion
 
 When converting PowerPoint files:
@@ -204,7 +243,8 @@ When converting PowerPoint files:
    - File location, style name, slide count
    - Navigation: Arrow keys, Space, scroll/swipe, click nav dots
    - How to customize: `:root` CSS variables for colors, font link for typography, `.reveal` class for animations
-   - If inline editing was enabled: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save
+   - If edit mode was enabled: Hover top-left corner or press E to enter edit mode, click any text to edit, Ctrl+S to save
+   - If review mode was enabled: Press Ctrl+E to enter Review Mode. Click any element or drag a region to select it, write your feedback in the sidebar, and click Save. When done, click Export .md to download suggestions.md — share this file with Claude to apply all changes at once.
 
 ---
 
@@ -216,4 +256,5 @@ When converting PowerPoint files:
 | [viewport-base.css](viewport-base.css) | Mandatory responsive CSS — copy into every presentation | Phase 3 (generation) |
 | [html-template.md](html-template.md) | HTML structure, JS features, code quality standards | Phase 3 (generation) |
 | [animation-patterns.md](animation-patterns.md) | CSS/JS animation snippets and effect-to-feeling guide | Phase 3 (generation) |
+| [review-mode.snippet.html](review-mode.snippet.html) | Review Mode overlay code — inject before `</body>` if user selected Review mode | Phase 3.5 (interactive modes) |
 | [scripts/extract-pptx.py](scripts/extract-pptx.py) | Python script for PPT content extraction | Phase 4 (conversion) |
