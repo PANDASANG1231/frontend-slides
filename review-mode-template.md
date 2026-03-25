@@ -102,7 +102,7 @@ When user selects element or area, insert at textarea start:
 
 ```
 📍 [Slide N, <tag.class> "text preview" @ (x,y,w,h)]     // Element
-📍 [Slide N, 区域: (x1,y1)-(x2,y2)]                       // Area
+📍 [Slide N, area: (x1,y1)-(x2,y2)]                        // Area
 ```
 
 **Rules:**
@@ -115,7 +115,7 @@ When user selects element or area, insert at textarea start:
 ```javascript
 // Regex
 var reElem = /@\s*\((-?\d+),\s*(-?\d+),\s*(\d+),\s*(\d+)\)/;
-var reArea = /区域:\s*\((-?\d+),(-?\d+)\)-\((-?\d+),(-?\d+)\)/;
+var reArea = /area:\s*\((-?\d+),(-?\d+)\)-\((-?\d+),(-?\d+)\)/;
 
 // Selection state
 var selectedComment = null;

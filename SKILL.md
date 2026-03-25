@@ -211,7 +211,7 @@ that matches the presentation's visual style (colors, fonts, spacing, animations
 **Core features:**
 - `R` key or button — toggle review panel
 - **Click element** — insert location info `📍 [Slide N, <tag> "text" @ (x,y,w,h)]`
-- **Drag area** — insert region info `📍 [Slide N, 区域: (x1,y1)-(x2,y2)]`
+- **Drag area** — insert region info `📍 [Slide N, area: (x1,y1)-(x2,y2)]`
 - Per-slide comment input with `Ctrl+Enter` to save
 - Comment list showing current slide's feedback
 - Export button — downloads markdown with all comments
@@ -227,7 +227,7 @@ Ctrl+S saves to localStorage).
 
 - [ ] `R` toggles the review panel without breaking slide navigation
 - [ ] Click element inserts `📍 [Slide N, <tag>...]` into textarea
-- [ ] Drag area inserts `📍 [Slide N, 区域:...]` into textarea
+- [ ] Drag area inserts `📍 [Slide N, area:...]` into textarea
 - [ ] Large containers (>60% of slide) are skipped on click
 - [ ] Comments save to the correct slide index
 - [ ] Click comment shows highlight at saved location
