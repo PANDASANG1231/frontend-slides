@@ -111,13 +111,15 @@ When user selects element or area, insert at textarea start:
 - Element text preview: max 30 chars, newlines removed
 - Skip elements larger than 60% of slide (containers)
 - Ensures slides resize proportionally (not covered) when the review panel opens
-
+- One comment may contain multiple 📍 locations
+- Click comment → show highlights for ALL locations (not just first)
 
 **Parsing & Highlight:**
+
 ```javascript
 // Regex
-var reElem = /@\s*\((-?\d+),\s*(-?\d+),\s*(\d+),\s*(\d+)\)/;
-var reArea = /area:\s*\((-?\d+),(-?\d+)\)-\((-?\d+),(-?\d+)\)/;
+var reElem = /@\s*\((-?\d+),\s*(-?\d+),\s*(\d+),\s*(\d+)\)/g;  // global flag
+var reArea = /area:\s*\((-?\d+),(-?\d+)\)-\((-?\d+),(-?\d+)\)/g;  // global flag
 
 // Selection state
 var selectedComment = null;
@@ -189,42 +191,39 @@ function insertLocationInfo(info) {
     textarea.value = info + '\n' + val;
   }
 }
+```
 
 ## Content Shift (Required)
 
+Slides must scale proportionally when panel opens (not just margin shift).
+
+**CSS:**
 ```css
-/* Panel width variable */
 :root {
   --review-panel-width: min(400px, 90vw);
 }
 
-/* Shift body content when panel is open */
-body.review-open {
-  margin-right: var(--review-panel-width);
-  transition: margin-right 0.4s var(--ease-out-expo);
-}
-
-/* Panel uses same width */
-.review-panel {
-  width: var(--review-panel-width);
+.slide.review-open {
+  transform-origin: top left;
+  transition: transform 0.4s var(--ease-out-expo);
 }
 ```
 
 **JS (in togglePanel):**
 ```javascript
-function togglePanel(){
-  state.open = !state.open;
-  document.body.classList.toggle('review-open', state.open);
-  // → Update panel visibility
-}
+var panelWidth = Math.min(400, window.innerWidth * 0.9);
+var scale = state.open ? (window.innerWidth - panelWidth) / window.innerWidth : 1;
+
+document.querySelectorAll('.slide').forEach(function(slide){
+  slide.classList.toggle('review-open', state.open);
+  slide.style.transform = state.open ? 'scale(' + scale + ')' : '';
+});
 ```
 
-// === MOUSE EVENTS (when panel open) ===
-// mousedown: Start drag, record position
-// mousemove: If dragging >5px show selection box; else highlight hovered element
-// mouseup: If dragged >10px insert area info
-// click: If valid small element, insert element info
-```
+**Rules:**
+- Use `transform: scale()`, not `margin-right`
+- Scale factor = `(viewport - panel) / viewport`
+- Recalculate on window resize if panel open
 
 ## Skill Decides
 
@@ -246,4 +245,4 @@ function togglePanel(){
 - Location info format (📍 prefix, coordinates)
 - Skip large containers (>60% of slide)
 - Clear highlights when: switching slides, closing panel, clicking outside comments
-- Content shift when: panel opens (body.review-open margin-right)
+- Proportional content scaling when panel opens (transform: scale, not just margin-right)
