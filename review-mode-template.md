@@ -11,7 +11,7 @@ Opt-in review system. Generate adapted to presentation style.
 | Save | `Ctrl+Enter` in textarea | Save/update comment to current slide |
 | Export | Click export button | Download markdown file |
 | Select element | Click on slide element | Insert location info into textarea |
-| Select area | Drag on slide | Insert region coordinates into textarea |
+| Select area | Press Shift + Drag on slide | Insert region coordinates into textarea |
 | Select comment | Click saved comment | Mark comment as selected + show highlight at saved location |
 | Deselect | Click outside comments | Remove selected state + clear all highlights |
 | Edit comment | Click Edit button | Load comment text into textarea for editing |
@@ -47,15 +47,7 @@ var comments = {
 
   // === KEYBOARD (required) ===
   document.addEventListener('keydown', function(e){
-    // R key toggles panel globally (even in textarea)
-    if(e.key === 'r' || e.key === 'R'){
-      if(!e.ctrlKey && !e.metaKey && !e.altKey){  // Only if no modifiers
-        e.preventDefault();  // Prevent 'r' from being typed
-        togglePanel();
-        return;
-      }
-    }
-
+    // Check textarea FIRST - allow normal typing
     if(e.target.matches('input,textarea,[contenteditable]')){
       e.stopPropagation();  // Block space/arrows from triggering slide navigation
       if(e.key === 'Escape'){
@@ -66,7 +58,16 @@ var comments = {
         }
       }
       if(e.ctrlKey && e.key === 'Enter') saveComment();
-      return;
+      return;  // Exit early - allow normal typing including 'r'
+    }
+
+    // R key toggles panel (only when NOT in input)
+    if(e.key === 'r' || e.key === 'R'){
+      if(!e.ctrlKey && !e.metaKey && !e.altKey){  // Only if no modifiers
+        e.preventDefault();  // Prevent 'r' from being typed
+        togglePanel();
+        return;
+      }
     }
   });
 
@@ -239,6 +240,37 @@ function insertLocationInfo(info) {
   textarea.setSelectionRange(newPos, newPos);
   textarea.focus();
 }
+
+// === CLICK HANDLER (element selection) ===
+// CRITICAL: Skip click selection if Shift is pressed (for drag mode)
+document.addEventListener('click', function(e){
+  if(!state.open) return;
+  if(e.target.closest('.review-panel')) return;
+  if(e.shiftKey) return;  // ← CRITICAL: Allow drag mode when Shift pressed
+
+  var slide = e.target.closest('.slide');
+  if(!slide) return;
+
+  var target = e.target;
+  if(!isValidTarget(target)) return;
+
+  // Skip large containers (>60% of slide)
+  var slideRect = slide.getBoundingClientRect();
+  var targetRect = target.getBoundingClientRect();
+  var targetArea = targetRect.width * targetRect.height;
+  var slideArea = slideRect.width * slideRect.height;
+  if(targetArea / slideArea > 0.6) return;
+
+  // Calculate coordinates and insert location info
+  var x = Math.round((targetRect.left - slideRect.left) / scaleX);
+  var y = Math.round(targetRect.top - slideRect.top);
+  var w = Math.round(targetRect.width / scaleX);
+  var h = Math.round(targetRect.height);
+
+  var desc = getElementDesc(target);
+  var info = '📍 [Slide ' + (state.currentSlide + 1) + ', ' + desc + ' @ (' + x + ',' + y + ',' + w + ',' + h + ')]';
+  insertLocationInfo(info);
+});
 ```
 
 ## Content Shift (Required)
@@ -309,5 +341,6 @@ var displayW = state.open ? loc.w * scaleX : loc.w;
 - Markdown export format
 - Location info format (📍 prefix, coordinates)
 - Skip large containers (>60% of slide)
+- Click handler must check `if(e.shiftKey) return;` to allow drag selection mode
 - Clear highlights when: switching slides, closing panel, clicking outside comments
 - Horizontal content scaling when panel opens (transform: scaleX, not scale or margin-right)
