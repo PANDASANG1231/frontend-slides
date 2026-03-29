@@ -4,18 +4,19 @@ Opt-in review system. Generate adapted to presentation style.
 
 ## Interaction Contract
 
-| Action | Trigger | Behavior |
-|--------|---------|----------|
-| Toggle panel | `R` key or click button | Open/close review panel |
-| Close | `Escape` | Close if open (or cancel edit if editing) |
-| Save | `Ctrl+Enter` in textarea | Save/update comment to current slide |
-| Export | Click export button | Download markdown file |
-| Select element | Click on slide element | Insert location info into textarea |
-| Select area | Press Shift + Drag on slide | Insert region coordinates into textarea |
-| Select comment | Click saved comment | Mark comment as selected + show highlight at saved location |
-| Deselect | Click outside comments | Remove selected state + clear all highlights |
-| Edit comment | Click Edit button | Load comment text into textarea for editing |
-| Delete comment | Click Delete button | Delete comment + clear highlights |
+
+| Action         | Trigger                     | Behavior                                                    |
+| -------------- | --------------------------- | ----------------------------------------------------------- |
+| Toggle panel   | `R` key or click button     | Open/close review panel                                     |
+| Close          | `Escape`                    | Close if open (or cancel edit if editing)                   |
+| Save           | `Ctrl+Enter` in textarea    | Save/update comment to current slide                        |
+| Export         | Click export button         | Download markdown file                                      |
+| Select element | Click on slide element      | Insert location info into textarea                          |
+| Select area    | Press Shift + Drag on slide | Insert region coordinates into textarea                     |
+| Select comment | Click saved comment         | Mark comment as selected + show highlight at saved location |
+| Deselect       | Click outside comments      | Remove selected state + clear all highlights                |
+| Edit comment   | Click Edit button           | Load comment text into textarea for editing                 |
+| Delete comment | Click Delete button         | Delete comment + clear highlights                           |
 
 
 ## Data Structure (Required)
@@ -46,8 +47,12 @@ var comments = {
   });
 
   // === KEYBOARD (required) ===
+  // ORDER IS CRITICAL — DO NOT move the textarea check below the R key check.
+  // If R is handled first, e.preventDefault() fires even inside the textarea,
+  // making it impossible to type 'r'. The textarea guard MUST come first so the
+  // early return short-circuits everything below it for all keystrokes.
   document.addEventListener('keydown', function(e){
-    // Check textarea FIRST - allow normal typing
+    // STEP 1: textarea guard — must be first. Early return allows all normal typing.
     if(e.target.matches('input,textarea,[contenteditable]')){
       e.stopPropagation();  // Block space/arrows from triggering slide navigation
       if(e.key === 'Escape'){
@@ -58,13 +63,13 @@ var comments = {
         }
       }
       if(e.ctrlKey && e.key === 'Enter') saveComment();
-      return;  // Exit early - allow normal typing including 'r'
+      return;  // ← exits here; R / space / any key types normally in textarea
     }
 
-    // R key toggles panel (only when NOT in input)
+    // STEP 2: R key toggle — only reached when focus is NOT in a text field
     if(e.key === 'r' || e.key === 'R'){
       if(!e.ctrlKey && !e.metaKey && !e.altKey){  // Only if no modifiers
-        e.preventDefault();  // Prevent 'r' from being typed
+        e.preventDefault();
         togglePanel();
         return;
       }
@@ -150,6 +155,7 @@ When user selects element or area, insert at textarea start:
 ```
 
 **Rules:**
+
 - Insert at current cursor position (not at beginning)
 - Multiple selections insert at cursor (each on new line starting with 📍)
 - Coordinates relative to slide element
@@ -278,6 +284,7 @@ document.addEventListener('click', function(e){
 Slides must shrink horizontally when panel opens (width only, height stays 100vh).
 
 **CSS:**
+
 ```css
 :root {
   --review-panel-width: min(400px, 90vw);
@@ -290,6 +297,7 @@ Slides must shrink horizontally when panel opens (width only, height stays 100vh
 ```
 
 **JS (in togglePanel):**
+
 ```javascript
 var panelWidth = Math.min(400, window.innerWidth * 0.9);
 var scaleX = state.open ? (window.innerWidth - panelWidth) / window.innerWidth : 1;
@@ -301,6 +309,7 @@ document.querySelectorAll('.slide').forEach(function(slide){
 ```
 
 **Rules:**
+
 - Use `transform: scaleX()` for width-only scaling (not `scale()` which affects both dimensions)
 - Scale factor = `(viewport - panel) / viewport`
 - Recalculate on window resize if panel open
@@ -330,10 +339,9 @@ var displayW = state.open ? loc.w * scaleX : loc.w;
 - Highlight colors (element hover, selection box, saved location)
 - Whether clicking comment shows its highlight on slide
 
-
 ## Must Preserve
 
-- Review Mode button visibility control same as Edit Mode (see html-template.md section **Inline Editing Implementation**)
+- Review Mode button visibility control same as Edit Mode, user hovers hotzone -> button becomes visible -> mouse moves toward button -> leaves hotzone -> button disappears before click. (see html-template.md section **Inline Editing Implementation**)
 - Keyboard shortcuts (R, Escape, Ctrl+Enter)
 - Edit functionality: Click Edit button → load comment into textarea → update on save
 - Data structure shape (for export compatibility)
@@ -344,3 +352,4 @@ var displayW = state.open ? loc.w * scaleX : loc.w;
 - Click handler must check `if(e.shiftKey) return;` to allow drag selection mode
 - Clear highlights when: switching slides, closing panel, clicking outside comments
 - Horizontal content scaling when panel opens (transform: scaleX, not scale or margin-right)
+
